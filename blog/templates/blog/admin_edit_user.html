@@ -1,0 +1,41 @@
+<!--
+    Copyright (C) 2017 Marco Scarpetta
+    
+    This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+    International License. To view a copy of this license,
+    visit http://creativecommons.org/licenses/by-sa/4.0/.
+-->
+
+{{#user}}
+<form action="{{edit_profile_url}}" method="post">
+    {% csrf_token %}
+    <p><label>Your id on the OAuth 2.0 provider (id@provider):</label></p>
+    <input type="text" value="{{oauth2_id}}" style="width:100%" readonly/>
+    
+    <p><label>Username:</label></p>
+    <input type="text" value="{{username}}" name="username" style="width:100%" readonly/>
+    
+    <p><label>Email:</label></p>
+    <input type="text" value="{{email}}" style="width:100%" readonly/>
+
+    <p><label for="name">Name:</label></p>
+    <input type="text" id="name" name="name" value="{{name}}"/>
+
+    {{#allow_bio_edit}}
+    <p><label for="bio">Bio:</label></p>
+    <textarea style="width: 80vw; height: 80vh" id="bio" name="bio">{{bio}}</textarea>
+    {{/allow_bio_edit}}
+    
+    <p><label for="hide_picture">Profile picture:</label></p>
+    <p>
+        <img src="{{picture}}" style="width: 100px;">
+        <label for="hide_picture">
+            <input type="checkbox" id="hide_picture" name="hide_picture"
+            {{#hide_picture}}checked{{/hide_picture}}/>
+            Hide picture
+        </label>
+    </p>
+
+    <p><button type="submit">Save</button></p>
+</form>
+{{/user}}

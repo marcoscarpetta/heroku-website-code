@@ -1,0 +1,70 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% if post %}Edit post "{{post.title}}"{% else %}New post{% endif %}{% endblock %}
+
+{% block body %}
+<form action="{% url 'admin_edit_post' %}" method="post" enctype='multipart/form-data' encoding='multipart/form-data'>
+    {% csrf_token %}
+    <p><label for="title">Title:</label></p>
+    <input type="text" id="title" name="title" value="{{post.title}}" maxlength="150"/>
+    
+    <p><label for="tags">Tags:</label></p>
+    <input type="text" id="tags" name="tags"
+    value="{% for tag in post.tags.all %}{{tag.name}}; {% endfor %}"/>
+    
+    <p><label for="body">Body:</label></p>
+    <textarea id="body" name="body">{{post.body|safe}}</textarea>
+    
+    <p>
+        <label for="draft">
+            <input type="checkbox" id="draft" name="draft" {% if not post or post.draft %}checked{% endif %}/>
+            Draft
+        </label>
+    </p>
+    
+    <p>
+        <label for="allow_comments">
+            <input type="checkbox" id="allow_comments" name="allow_comments" {% if not post or post.allow_comments %}checked{% endif %}/>
+            Allow comments
+        </label>
+    </p>
+    
+    <p>
+        <label for="force_date">
+            <input type="checkbox" id="force_date" name="force_date"/>
+            Force date
+        </label>
+    </p>
+    
+    <p><label for="forced_date">Forced date (format "YYYY-MM-DD HH:MM" UTC):</label></p>
+    <input type="text" id="forced_date" name="forced_date" maxlength="16"/>
+    
+    <p>
+        <label for="force_edit_date">
+            <input type="checkbox" id="force_edit_date" name="force_edit_date"/>
+            Force edit date
+        </label>
+    </p>
+    
+    <p><label for="forced_edit_date">Forced edit date (format "YYYY-MM-DD HH:MM" UTC):</label></p>
+    <input type="text" id="forced_edit_date" name="forced_edit_date" maxlength="16"/>
+    
+    {% for file in post.files.all %}
+    <p>{{file.name}}<button type="submit" formaction="{% url 'admin_delete_file' 'post' post.pk file.name %}" class="button_red">Delete</button></p>
+    {% endfor %}
+    
+    <p>
+        <input type="file" name="file">
+        <button type="submit" name="upload_file">Upload</button>
+    </p>
+    
+    {% if post %}
+    <input type="hidden" name="pk" value="{{post.pk}}">
+    {% endif %}
+    
+    <p><button type="submit" name="save_post" class="button_green">Save</button></p>
+</form>
+{% endblock %}

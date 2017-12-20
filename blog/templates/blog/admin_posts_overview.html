@@ -1,0 +1,38 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}Posts overview{% endblock %}
+
+{% block body %}
+<p>
+    <a href="{% url 'admin_edit_post' %}">New post</a>
+</p>
+<table class="admin_table">
+    <tr>
+        <td>Title</td>
+        <td>Author</td>
+        <td>Date</td>
+        <td>Comments</td>
+    </tr>
+    {% for post in posts %}
+    <tr>
+        <td>
+            <a href="{% url 'post' post.date.year post.date|date:"m" post.uid %}">{{post.title}}</a>
+        </td>
+        <td>
+            {% for author in post.authors.all %}
+            <a href="{% url 'author' author.username %}">{{author.name}}</a>
+            {% endfor %}
+        </td>
+        <td>
+            <date datetime="{{post.date}}">{{post.date}}</date>
+        </td>
+        <td>{{post.comments.all.count}}</td>
+        <td><a href="{% url 'admin_edit_post' %}?pk={{post.pk}}">Edit</a></td>
+        <td><a href="">Delete</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

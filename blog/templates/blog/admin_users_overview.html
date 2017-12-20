@@ -1,0 +1,33 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}Users overview{% endblock %}
+
+{% block body %}
+<table class="admin_table">
+    <tr>
+        <td>Username</td>
+        <td>Name</td>
+        <td>Email</td>
+        <td>Level</td>
+    </tr>
+    {% for user in users %}
+    <tr>
+        <td>
+            {{user.username}}
+        </td>
+        <td>
+            <a href="{% url 'author' user.username %}">{{user.name}}</a>
+        </td>
+        <td>
+            {{user.email}}
+        </td>
+        <td>{{user.level}}</td>
+        <td><a href="{% url 'admin_edit_post' %}?pk={{post.pk}}">Edit</a></td>
+        <td><a href="">Delete</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

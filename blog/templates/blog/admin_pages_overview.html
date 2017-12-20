@@ -1,0 +1,26 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}Pages overview{% endblock %}
+
+{% block body %}
+<p>
+    <a href="{% url 'admin_edit_page' %}">New page</a>
+</p>
+<table class="admin_table">
+    <tr>
+        <td>Title</td>
+    </tr>
+    {% for page in pages %}
+    <tr>
+        <td>
+            <a href="{% url 'page' page.uid %}">{{page.title}}</a>
+        </td>
+        <td><a href="{% url 'admin_edit_page' %}?pk={{page.pk}}">Edit</a></td>
+        <td><a href="">Delete</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

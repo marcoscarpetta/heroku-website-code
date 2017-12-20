@@ -1,0 +1,42 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% if page %}Edit page "{{page.title}}"{% else %}New page{% endif %}{% endblock %}
+
+{% block body %}
+<form action="{% url 'admin_edit_page' %}" method="post" enctype='multipart/form-data' encoding='multipart/form-data'>
+    {% csrf_token %}
+    <p><label for="title">Title:</label></p>
+    <input type="text" id="title" name="title" value="{{page.title}}" maxlength="150"/>
+    
+    <p><label for="body">Body:</label></p>
+    <textarea id="body" name="body">{{page.body|safe}}</textarea>
+    
+    <p>
+        <label for="force_edit_date">
+            <input type="checkbox" id="force_edit_date" name="force_edit_date"/>
+            Force edit date
+        </label>
+    </p>
+    
+    <p><label for="forced_edit_date">Forced edit date (format "YYYY-MM-DD HH:MM" UTC):</label></p>
+    <input type="text" id="forced_edit_date" name="forced_edit_date" maxlength="16"/>
+    
+    {% for file in page.files.all %}
+    <p>{{file.name}} <button type="submit" formaction="{% url 'admin_delete_file' 'page' page.pk file.name %}" class="button_red">Delete</button></p>
+    {% endfor %}
+    
+    <p>
+        <input type="file" name="file">
+        <button type="submit" name="upload_file">Upload</button>
+    </p>
+    
+    {% if page %}
+    <input type="hidden" name="pk" value="{{page.pk}}">
+    {% endif %}
+    
+    <p><button type="submit" name="save_post" class="button_green">Save</button></p>
+</form>
+{% endblock %}

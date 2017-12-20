@@ -1,0 +1,26 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}One time admin elevation{% endblock %}
+
+{% block body %}
+
+{% if error_admin_existent %}
+<p class="error">Admin already exists!</p>
+{% elif error_wrong_password %}
+<p class="error">Wrong password!</p>
+{% elif done %}
+<p>Done!</p>
+{% else %}
+<form action="{% url 'admin_one_time_elevation' %}" method="post" enctype='multipart/form-data' encoding='multipart/form-data'>
+    {% csrf_token %}
+    <p><label for="password">One time password:</label></p>
+    <input type="password" id="password" name="password"/>
+    
+    <p><button type="submit" name="one_time_admin_password" class="button_green">Elevate</button></p>
+</form>
+{% endif %}
+
+{% endblock %}
