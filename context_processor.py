@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Marco Scarpetta
+# Copyright (C) 2017-2018 Marco Scarpetta
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
