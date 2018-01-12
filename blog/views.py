@@ -352,8 +352,12 @@ def oauth2callback(request, provider):
         oauth2_id = "{}@{}".format(userinfo[client_secrets["id"]], provider)
         
         try:
+            # Get existing url
             user = models.User.objects.get(oauth2_id=oauth2_id)
+            # Update user's profile picture url on each login
+            user.picture_url = userinfo[client_secrets["picture_url"]]
         except:
+            # Create new user
             user = models.User()
             user.oauth2_id = oauth2_id
             user.name = userinfo[client_secrets["name"]]
