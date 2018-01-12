@@ -15,9 +15,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.conf.urls import include, url
-from django.contrib import admin
+from django.conf.urls import include
+from django.urls import path
 
 urlpatterns = [
-    url('^', include('code.blog.urls')),
+    path('', include('code.blog.urls')),
 ]
