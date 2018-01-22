@@ -1,0 +1,20 @@
+{% extends "blog/base_blog.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}Users overview{% endblock %}
+
+{% block body %}
+<p>
+    <a href="{% url 'admin_backup' %}">Backup</a>
+</p>
+
+<p>
+    <form action="{% url 'admin_restore_backup' %}" method="post" enctype='multipart/form-data' encoding='multipart/form-data'>
+    {% csrf_token %}
+    <input type="file" name="backup_file">
+    <button type="submit" name="upload_file">Restore backup</button>
+</form>
+</p>
+{% endblock %}

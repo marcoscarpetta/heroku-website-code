@@ -1,0 +1,25 @@
+{% load i18n %}
+
+{% if not IS_SECURE %}
+    Go to <a href="{{SECURE_SITE_URL}}{{request.path}}">secure site</a> to login.
+{% elif logged_user %}
+    <p>Logged in as {{logged_user.username}}.</p>
+    <p>
+        {% if logged_user.POST_WRITE %}<a href="{% url 'admin_posts_overview' %}">Posts</a><br>{% endif %}
+        {% if logged_user.PAGE_WRITE %}<a href="{% url 'admin_pages_overview' %}">Pages</a><br>{% endif %}
+        {% if logged_user.USER_WRITE %}<a href="{% url 'admin_users_overview' %}">Users</a><br>{% endif %}
+        {% if logged_user.LEVEL_FULL %}<a href="{% url 'admin_backup_overview' %}">Backup/Restore</a><br>{% endif %}
+        <a href="{{edit_profile_url}}">Edit profile</a><br>
+        <a href="{% url 'logout' %}?redirect_url={{request.path}}">Logout</a>
+    </p>
+    {% if logged_user.blocked %}
+        <p>You have been blocked.</p>
+    {% endif %}
+{% else %}
+    <a href="{% url 'oauth2_login' 'google' %}?source_url={{request.path}}" class="button_blue">Login with Google</a>
+    <a href="{% url 'oauth2_login' 'github' %}?source_url={{request.path}}" class="button_blue">Login with GitHub</a>
+    <p>
+    Effettuando il login accetti le <a href="{% url 'page' 'privacy-policy' %}">
+    Norme sulla Privacy</a>.
+    </p>
+{% endif %}

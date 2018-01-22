@@ -30,9 +30,20 @@ import unicodedata
 import re
 import mimetypes
 import bleach
+import zipfile
+import io
+import ruamel.yaml as yaml
 
 from . import models
 from . import settings
+
+def str_presenter(dumper, value):
+    if "\n" in value:
+        value = value.replace("\r\n", "\n")
+        return dumper.represent_scalar('tag:yaml.org,2002:str', str(value), style="|")
+    return dumper.represent_scalar('tag:yaml.org,2002:str', value, "\"")
+
+yaml.add_representer(str, str_presenter)
 
 oauth2_parameters = {
     "google": {
@@ -654,5 +665,181 @@ def admin_delete_file(request, doc_type, pk, filename):
         response = redirect(request.META['HTTP_REFERER'], code=302)
         logged_user.update_session_id(response)
         return response
+    else:
+        raise PermissionDenied()
+
+def admin_backup_overview(request):
+    redirect_to_secure(request)
+    logged_user = get_logged_user(request)
+    
+    if logged_user and logged_user.LEVEL_FULL():
+        response = render(request, "blog/admin_backup.html", {
+            "logged_user": logged_user,
+        })
+        logged_user.update_session_id(response)
+        return response
+    else:
+        raise PermissionDenied()
+
+def admin_backup(request):
+    redirect_to_secure(request)
+    logged_user = get_logged_user(request)
+    
+    f = io.BytesIO()
+    z_f = zipfile.ZipFile(f, 'w')
+    
+    # Backup informations
+    info = {
+        "version": "1.0",
+    }
+    
+    z_f.writestr(
+        os.path.join("/info.yaml"),
+        yaml.dump(info, default_flow_style=False, indent=4, block_seq_indent=2)
+    )
+    
+    # Save posts
+    posts_list = []
+    for post in models.Post.objects.all():
+        posts_list.append(post.pk)
+        
+        z_f.writestr(
+            os.path.join("/posts/", str(post.pk), "index.yaml"),
+            yaml.dump(post.to_dict(), default_flow_style=False, indent=4, block_seq_indent=2)
+        )
+        
+        for post_file in post.files.all():
+            z_f.writestr(
+                os.path.join("/posts/", str(post.pk), post_file.name),
+                post_file.content
+            )
+    
+    z_f.writestr(
+        os.path.join("/posts/index.yaml"),
+        yaml.dump(posts_list, default_flow_style=False, indent=4, block_seq_indent=2)
+    )
+
+    # Save pages
+    pages_list = []
+    for page in models.Page.objects.all():
+        pages_list.append(page.pk)
+        
+        z_f.writestr(
+            os.path.join("/pages/", str(page.pk), "index.yaml"),
+            yaml.dump(page.to_dict(), default_flow_style=False, indent=4, block_seq_indent=2)
+        )
+        
+        for page_file in page.files.all():
+            z_f.writestr(
+                os.path.join("/pages/", str(page.pk), page_file.name),
+                page_file.content
+            )
+    
+    z_f.writestr(
+        os.path.join("/pages/index.yaml"),
+        yaml.dump(pages_list, default_flow_style=False, indent=4, block_seq_indent=2)
+    )
+    
+    # Save tags
+    tags = list((tag.to_dict() for tag in models.Tag.objects.all()))
+    
+    z_f.writestr(
+        os.path.join("/tags.yaml"),
+        yaml.dump(tags, default_flow_style=False, indent=4, block_seq_indent=2)
+    )
+    
+    # Save users
+    users = list((user.to_dict() for user in models.User.objects.all()))
+    
+    z_f.writestr(
+        os.path.join("/users.yaml"),
+        yaml.dump(users, default_flow_style=False, indent=4, block_seq_indent=2)
+    )
+        
+    z_f.close()
+
+    f.seek(0)
+    
+    response = HttpResponse(content=f.read())
+    response['Content-Type'] = "application/zip"
+    response["Content-Disposition"] = "attachment; filename=backup.zip"
+    
+    return response
+
+def admin_restore_backup(request):
+    redirect_to_secure(request)
+    logged_user = get_logged_user(request)
+    
+    if logged_user and logged_user.LEVEL_FULL():
+        if request.method == "POST":
+            if request.FILES and len(request.FILES) > 0:
+                z_f = zipfile.ZipFile(request.FILES["backup_file"])
+                
+                info = yaml.safe_load(z_f.open("/info.yaml", "r").read())
+                if info['version'] == "1.0":
+                    # Clear database
+                    models.Page.objects.all().delete()
+                    models.Post.objects.all().delete()
+                    models.Tag.objects.all().delete()
+                    models.User.objects.all().delete()
+                    models.File.objects.all().delete()
+                    models.Comment.objects.all().delete()
+                    
+                    # Restore tag
+                    tags = yaml.safe_load(z_f.open("/tags.yaml", "r").read())
+                    for tag_dict in tags:
+                        tag = models.Tag()
+                        tag.from_dict(tag_dict)
+                    
+                    # Restore users
+                    users = yaml.safe_load(z_f.open("/users.yaml", "r").read())
+                    for user_dict in users:
+                        user = models.User()
+                        user.from_dict(user_dict)
+                    
+                    # Restore posts
+                    posts_list = yaml.safe_load(z_f.open("/posts/index.yaml", "r").read())
+                    for pk in posts_list:
+                        post_dict = yaml.safe_load(
+                            z_f.open(os.path.join("/posts/", str(pk), "index.yaml"), "r").read()
+                        )
+                        post = models.Post()
+                        post.from_dict(post_dict)
+                        
+                        for filename in post_dict['files']:
+                            f = models.File()
+                            f.name = filename
+                            f.content = z_f.open(
+                                os.path.join("/posts/", str(pk), filename), "r").read()
+                            f.save()
+                            
+                            post.files.add(f)
+                        
+                        post.save()
+                    
+                    # Restore pages
+                    pages_list = yaml.safe_load(z_f.open("/pages/index.yaml", "r").read())
+                    for pk in pages_list:
+                        page_dict = yaml.safe_load(
+                            z_f.open(os.path.join("/pages/", str(pk), "index.yaml"), "r").read()
+                        )
+                        page = models.Page()
+                        page.from_dict(page_dict)
+                        
+                        for filename in page_dict['files']:
+                            f = models.File()
+                            f.name = filename
+                            f.content = z_f.open(
+                                os.path.join("/pages/", str(pk), filename), "r").read()
+                            f.save()
+                            
+                            page.files.add(f)
+                        
+                        page.save()
+            
+        response = redirect(reverse("admin_backup_overview"), code=302)
+        logged_user.update_session_id(response)
+        return response
+
     else:
         raise PermissionDenied()

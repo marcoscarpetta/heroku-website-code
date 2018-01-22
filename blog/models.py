@@ -31,6 +31,20 @@ class UserLevel():
 class Tag(models.Model):
     name = models.CharField(max_length=50)
     uid = models.CharField(max_length=50)
+    
+    def to_dict(self):
+        return {
+            "pk": self.pk,
+            "name": self.name,
+            "uid": self.uid,
+        }
+    
+    def from_dict(self, data):
+        self.pk = data['pk']
+        self.name = data['name']
+        self.uid = data['uid']
+        
+        self.save()
 
 class User(models.Model):
     name = models.CharField(max_length=50)
@@ -57,6 +71,36 @@ class User(models.Model):
             httponly = True
         )
     
+    def to_dict(self):
+        return {
+            "pk": self.pk,
+            "name": self.name,
+            "oauth2_id": self.oauth2_id,
+            "level": self.level,
+            "username": self.username,
+            "email": self.email,
+            "picture_url": self.picture_url,
+            "bio": self.bio,
+            "blocked": self.blocked,
+            "hide_content": self.hide_content,
+            "hide_picture": self.hide_picture,
+        }
+    
+    def from_dict(self, data):
+        self.pk = data['pk']
+        self.name = data['name']
+        self.oauth2_id = data['oauth2_id']
+        self.level = data['level']
+        self.username = data['username']
+        self.email = data['email']
+        self.picture_url = data['picture_url']
+        self.bio = data['bio']
+        self.blocked = data['blocked']
+        self.hide_content = data['hide_content']
+        self.hide_picture = data['hide_picture']
+        
+        self.save()
+    
     def PAGE_WRITE(self):
         return self.level in [UserLevel.FULL]
     
@@ -71,6 +115,9 @@ class User(models.Model):
     
     def COMMENT_WRITE(self):
         return self.level in [UserLevel.FULL, UserLevel.COLLABORATOR, UserLevel.VISITOR] and not self.blocked
+    
+    def LEVEL_FULL(self):
+        return self.level == UserLevel.FULL
 
 class Comment(models.Model):
     author = models.ForeignKey(User, models.SET_NULL, blank=True, null=True, related_name="comments")
@@ -78,6 +125,24 @@ class Comment(models.Model):
     date = models.DateTimeField(default=datetime.utcnow)
     hidden = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
+    
+    def to_dict(self):
+        return {
+            "author": self.author.pk,
+            "body": self.body,
+            "date": self.date,
+            "hidden": self.hidden,
+            "deleted": self.deleted,
+        }
+    
+    def from_dict(self, data):
+        self.author = User.objects.get(pk=data['author'])
+        self.body = data['body']
+        self.date = data['date']
+        self.hidden = data['hidden']
+        self.deleted = data['deleted']
+        
+        self.save()
 
 class File(models.Model):
     name = models.CharField(max_length=100)
@@ -109,7 +174,48 @@ class Post(models.Model):
                           "month": self.date.strftime('%m'),
                           "uid": self.uid})),
                       tmp)
-                      
+    
+    def to_dict(self):
+        return {
+            "pk": self.pk,
+            "uid": self.uid,
+            "title": self.title,
+            "body": self.body,
+            "tags": list((tag.pk for tag in self.tags.all())),
+            "authors": list((author.pk for author in self.authors.all())),
+            "draft": self.draft,
+            "allow_comments": self.allow_comments,
+            "date": self.date,
+            "edit_date": self.edit_date,
+            "files": list((f.name for f in self.files.all())),
+            "comments": list((comment.to_dict() for comment in self.comments.all())),
+        }
+    
+    def from_dict(self, data):
+        self.pk = data['pk']
+        self.uid = data['uid']
+        self.title = data['title']
+        self.body = data['body']
+        self.draft = data['draft']
+        self.allow_comments = data['allow_comments']
+        self.date = data['date']
+        self.edit_date = data['edit_date']
+        
+        self.save()
+        
+        for tag_pk in data['tags']:
+            self.tags.add(Tag.objects.get(pk=tag_pk))
+        
+        for author_pk in data['authors']:
+            self.authors.add(User.objects.get(pk=author_pk))
+        
+        for comment_dict in data['comments']:
+            comment = Comment()
+            comment.from_dict(comment_dict)
+            comment.save()
+            self.comments.add(comment)
+        
+        self.save()
 
 class Page(models.Model):
     uid = models.CharField(max_length=150)
@@ -117,3 +223,22 @@ class Page(models.Model):
     body = models.TextField()
     files = models.ManyToManyField(File, related_name="+")
     edit_date = models.DateTimeField(auto_now=True)
+    
+    def to_dict(self):
+        return {
+            "pk": self.pk,
+            "uid": self.uid,
+            "title": self.title,
+            "body": self.body,
+            "files": list((f.name for f in self.files.all())),
+            "edit_date": self.edit_date,
+        }
+    
+    def from_dict(self, data):
+        self.pk = data['pk']
+        self.uid = data['uid']
+        self.title = data['title']
+        self.body = data['body']
+        self.edit_date = data['edit_date']
+        
+        self.save()

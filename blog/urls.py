@@ -47,4 +47,7 @@ urlpatterns = [
     path('admin/edit_post/', views.admin_edit_post, name='admin_edit_post'),
     path('admin/edit_page/', views.admin_edit_page, name='admin_edit_page'),
     path('admin/delete_file/<doc_type>/<pk>/<filename>/', views.admin_delete_file, name='admin_delete_file'),
+    path('admin/backup_overview', views.admin_backup_overview, name='admin_backup_overview'),
+    path('admin/backup', views.admin_backup, name='admin_backup'),
+    path('admin/restore_backup', views.admin_restore_backup, name='admin_restore_backup'),
 ]
