@@ -20,6 +20,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Blog
     path('', views.index, name='index'),
     path('posts/<int:page_number>/', views.index, name="index"),
     path('author/<username>/', views.author, name="author"),
@@ -30,16 +31,16 @@ urlpatterns = [
     path('<int:year>/<int:month>/<slug:uid>/<filename>/', views.post_file, name="post_file"),
     path('submit_comment/<int:pk>/', views.submit_comment, name="submit_comment"),
     path('toggle_delete_comment/<int:pk>/', views.toggle_delete_comment, name="toggle_delete_comment"),
-    path('page/<slug:uid>/', views.page, name="page"),
-    path('page/<slug:uid>/<filename>/', views.page_file, name="page_file"),
     path('feed/', views.feed, name="feed"),
     path('tag/<tag_uid>/feed/', views.feed, name="tag_feed"),
     path('author/<username>/feed/', views.feed, name="author_feed"),
-    #login
+    
+    # Login
     path('oauth2_login/<provider>/', views.oauth2_login, name="oauth2_login"),
     path('oauth2callback/<provider>/', views.oauth2callback, name="oauth2callback"),
     path('logout/', views.logout, name='logout'),
-    #admin
+    
+    # Admin
     path('admin/one_time_elevation/', views.admin_one_time_elevation, name='admin_one_time_elevation'),
     path('admin/posts_overview/', views.admin_posts_overview, name='admin_posts_overview'),
     path('admin/pages_overview/', views.admin_pages_overview, name='admin_pages_overview'),
@@ -50,4 +51,8 @@ urlpatterns = [
     path('admin/backup_overview', views.admin_backup_overview, name='admin_backup_overview'),
     path('admin/backup', views.admin_backup, name='admin_backup'),
     path('admin/restore_backup', views.admin_restore_backup, name='admin_restore_backup'),
+    
+    # Pages
+    path('<slug:uid>/', views.page, name="page"),
+    path('<slug:uid>/<filename>/', views.page_file, name="page_file"),
 ]
