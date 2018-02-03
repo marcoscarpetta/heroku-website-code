@@ -100,8 +100,8 @@ else:
 
     DEBUG = False
     
-    INSTALLED_APPS.append('whitenoise.runserver_nostatic')
-    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+    INSTALLED_APPS.insert(0, 'whitenoise.runserver_nostatic')
+    MIDDLEWARE.insert(0, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
     DATABASES = {'default': dj_database_url.config(conn_max_age=500)}
 
