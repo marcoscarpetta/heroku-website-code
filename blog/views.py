@@ -566,9 +566,14 @@ def admin_edit_post(request):
             if request.FILES:
                 for uploaded in request.FILES:
                     uploaded = request.FILES[uploaded]
-                    f = models.File(name=uploaded.name, content=uploaded.read())
-                    f.save()
-                    post.files.add(f)
+                    if post.files.filter(name=uploaded.name).count() > 0:
+                        f = post.files.all().get(name=uploaded.name)
+                        f.content = uploaded.read()
+                        f.save()
+                    else:
+                        f = models.File(name=uploaded.name, content=uploaded.read())
+                        f.save()
+                        post.files.add(f)
             
             post.save()
             
@@ -632,9 +637,14 @@ def admin_edit_page(request):
             if request.FILES:
                 for uploaded in request.FILES:
                     uploaded = request.FILES[uploaded]
-                    f = models.File(name=uploaded.name, content=uploaded.read())
-                    f.save()
-                    page.files.add(f)
+                    if page.files.filter(name=uploaded.name).count() > 0:
+                        f = page.files.all().get(name=uploaded.name)
+                        f.content = uploaded.read()
+                        f.save()
+                    else:
+                        f = models.File(name=uploaded.name, content=uploaded.read())
+                        f.save()
+                        page.files.add(f)
                 
                 page.save()
                 return redirect(reverse("admin_edit_page") + "?pk={}".format(page.pk), code=302)
